@@ -4,7 +4,7 @@ import numpy as np
 
 class Mp3Stream:
     """
-    Small simple python class to open, load, and play mp3 files.
+    Simple and fast python class to decode and play mp3 files.
     """
     
     def __init__(self, fp):
@@ -12,11 +12,13 @@ class Mp3Stream:
         self.decoded = None
         self.rate = None
         
-    def np_decode(self, n_size, offset=0):
+    def np_decode(self, n_size=None, offset=0):
         decoded = self.decode(n_size, offset)
         return np.array(decoded.samples, dtype=np.float32).reshape((-1, decoded.nchannels))
         
-    def decode(self, n_size, offset=0):
+    def decode(self, n_size=None, offset=0):
+        if n_size is None: 
+            n_size = os.path.getsize(self.fp)
         assert n_size > 0
         n_size = int(n_size)
         with open(self.fp, "rb") as f:
