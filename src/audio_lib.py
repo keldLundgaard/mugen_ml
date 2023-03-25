@@ -17,7 +17,7 @@ class Mp3Stream:
         self.fsize = os.path.getsize(self.fp)
     
     def np_decode_rand_offset(self, n_size): 
-        offset = int(np.random.random() * (self.fsize-(n_size + n_size/2)))
+        offset = int(np.random.random() * (self.fsize-1.5*n_size))
         return self.np_decode(n_size, offset)
 
     def np_decode(self, n_size=None, offset=0):
