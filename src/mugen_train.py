@@ -1,8 +1,46 @@
 import numpy as np
+
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 from audio_lib import Mp3Stream
+
+def get_batch_genre_one_hot(genres, n_genres, device):
+        return (
+            torch.nn.functional.one_hot(torch.tensor(genres), n_genres)
+            .requires_grad_(False)
+            .type(torch.float)
+            .to(device)
+        )
+
+
+class GenreClassifier(nn.Module):
+    def __init__(self, n_classes, feature_size, t_specs={}, use_transformer=True):
+        super().__init__()
+        self.feature_size = feature_size
+        self.use_transformer = use_transformer
+
+        if self.use_transformer:
+            self.genre_transformer = nn.Transformer(
+                **{**t_specs, **{"d_model": feature_size}}
+            )
+
+        self.fc = nn.Linear(feature_size, n_classes)
+
+    def forward(self, x):
+        # Add padding so that it works with transformer 
+        zero_padding = torch.zeros((self.feature_size - x.shape[0], *x.shape[1:])).to("cuda")
+        x = torch.cat((x, zero_padding), dim=0)
+
+        # shape is now batch, timesteps, layer features
+        x = x.permute(1, 2, 0)
+
+        if self.use_transformer:
+            x = self.genre_transformer(x, x)
+        x = x.mean(dim=1)
+        prob = torch.sigmoid(self.fc(x))
+        return prob
 
 
 def train(model, optimizer, data_loader):
@@ -75,8 +113,8 @@ class musicDataset(Dataset):
         self.device = device
         self.data_df = data_df
         self.n_size = n_size
-        self.cut = cut
-        self.start_cut = start_cut
+        self.cut = int(cut)
+        self.start_cut = int(start_cut)
         self.offset = offset
 
     def __len__(self):
@@ -98,6 +136,16 @@ class musicDataset(Dataset):
             ]
             d = d.to(self.device)
         return d, genre_idx
+
+
+def get_num_params(model):
+    return np.sum(
+        np.fromiter(
+            (
+                torch.prod(torch.tensor(param.size())).item() 
+                for name, param in model.named_parameters()), 
+            dtype=int))
+
 
 
 GENRE_TO_IDX = {
