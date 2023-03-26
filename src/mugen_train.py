@@ -66,9 +66,11 @@ def validation(model, data_loader):
     return running_loss / len(data_loader)
 
 
-def get_music_data_loaders(music_df, batch_size=6, n_size=1e5, cut=100000):
-    train_ds = musicDataset(music_df, n_size=n_size, cut=cut)
-    valid_ds = musicDataset(music_df[:100], n_size=n_size, cut=cut, offset=2e6)
+def get_music_data_loaders(music_df, batch_size=12, n_size=1e5, cut=100000, random_mix_stereo=True):
+    train_ds = musicDataset(
+        music_df, n_size=n_size, cut=cut, random_mix_stereo=random_mix_stereo)
+    valid_ds = musicDataset(
+        music_df[:100], n_size=n_size, cut=cut, offset=2e6, random_mix_stereo=random_mix_stereo)
 
     train_loader = DataLoader(
         train_ds,
@@ -90,11 +92,18 @@ def music_collate_fn_wrap(cut):
         features = []
         genres = []
         for xi, genre in x:
-            if xi is not None and xi.shape[1] >= cut:
-                features.append(xi)
-                # need to make two entries, one for each channel
-                genres.append(genre)
-                genres.append(genre)
+            if  xi is not None:
+                if len(xi.shape) == 1 and xi.shape[0] >= cut:
+                    # if we are pulling mono channels
+                    features.append(xi[None]) # add shape dimension to support concat
+                    genres.append(genre)
+                elif len(xi.shape) == 2 and xi.shape[1] >= cut:
+                    # if we are using two channels (stereo)
+                    features.append(xi)
+                    # need to make two entries, one for each channel
+                    genres.append(genre)
+                    genres.append(genre)
+
         return torch.concat(features), genres
 
     return music_collate_fn
@@ -109,6 +118,7 @@ class musicDataset(Dataset):
         device="cuda",
         offset=None,
         start_cut=1000,
+        random_mix_stereo=False,
     ):
         self.device = device
         self.data_df = data_df
@@ -116,6 +126,7 @@ class musicDataset(Dataset):
         self.cut = int(cut)
         self.start_cut = int(start_cut)
         self.offset = offset
+        self.random_mix_stereo = random_mix_stereo
 
     def __len__(self):
         return len(self.data_df)
@@ -134,6 +145,9 @@ class musicDataset(Dataset):
             d = torch.tensor(d).movedim(0, -1)[
                 :, self.start_cut : self.cut + self.start_cut
             ]
+            if self.random_mix_stereo:
+                LR_mix_ratio = np.random.random()
+                d = LR_mix_ratio * d[0] + (1 - LR_mix_ratio) * d[1]
             d = d.to(self.device)
         return d, genre_idx
 
