@@ -2,7 +2,9 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+
 
 from audio_lib import Mp3Stream
 
@@ -14,6 +16,43 @@ def get_batch_genre_one_hot(genres, n_genres, device):
             .to(device)
         )
 
+
+class MusicCNN(nn.Module):
+    def __init__(self, n_classes):
+        super(MusicCNN, self).__init__()
+        
+        # Define convolutional layers
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1)
+        
+        # Define pooling layer
+        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+        
+        # Define fully connected layers
+        self.fc1 = nn.Linear(in_features=128*4*4, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=n_classes)
+        
+    def forward(self, x):
+        # Perform convolutional layers and pooling
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = F.relu(self.conv3(x))
+        x = self.pool(x)
+        x = F.relu(self.conv4(x))
+        x = self.pool(x)
+        
+        # Flatten output for fully connected layers
+        x = x.view(-1, 128*4*4)
+        
+        # Perform fully connected layers
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        
+        return x
 
 class GenreClassifier(nn.Module):
     def __init__(self, n_classes, feature_size, t_specs={}, use_transformer=True):
