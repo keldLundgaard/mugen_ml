@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import lightning.pytorch as pl
-
+import matplotlib.pylab as plt
 from audio_lib import Mp3Stream
 
 N_CPU_CORES = os.cpu_count()

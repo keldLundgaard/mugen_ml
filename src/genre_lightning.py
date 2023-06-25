@@ -3,6 +3,7 @@ from pathlib import Path
 from collections import Counter
 from IPython.display import Audio
 
+
 PROJECT_DIR = Path(sys.path[0])/".."
 DATA_DIR = PROJECT_DIR/"data"
 SRC_DIR = PROJECT_DIR/"src"
@@ -19,14 +20,17 @@ from fairseq_wav2vec import Wav2Vec2Config, Wav2Vec2Model
 import pandas as pd
 
 import lightning.pytorch as pl
+from lightning.pytorch.callbacks import ModelCheckpoint
 
 from mugen_train import (
     musicDataset, IDX_to_GENRE, GENRE_TO_IDX, 
     get_music_data_loaders, GenreClassifier, 
 #     train_genre_predict, validation_genre_predict,
     GenreEncoder,
-    get_num_params)
+    get_num_params,
+    get_lr)
 
+torch.set_float32_matmul_precision("medium")
 
 if __name__ == "__main__":
     feature_size = 128
@@ -55,16 +59,26 @@ if __name__ == "__main__":
 
     # torch.multiprocessing.set_start_method('spawn')
 
+    checkpoint_callback = ModelCheckpoint(
+        dirpath="/home/keld/projects/music_gen/mugen_ml/train_checkpoints", 
+        every_n_epochs=1, 
+        monitor="train_loss")
+
     trainer = pl.Trainer(
-        limit_train_batches=1000, 
-        max_epochs=1, 
+        # limit_train_batches=1000, 
+        max_epochs=3, 
         accelerator="gpu", 
         devices=2,
         strategy='ddp',     
+        default_root_dir="/home/keld/projects/music_gen/mugen_ml/train_checkpoints",
+        callbacks=[checkpoint_callback]
         # strategy='ddp_notebook',     
     #     precision='16-mixed'
     #     precision=16, 
     #     devices=2, 
     )
+    
+    optimum_lr = get_lr(trainer, genre_predictor, train_loader, plot=True)
+    genre_predictor.lr = optimum_lr
 
     trainer.fit(model=genre_predictor, train_dataloaders=train_loader)
