@@ -18,8 +18,8 @@ jupyterlab_widgets>=3.0.6
 pytorch-lightning>=2.0.0
 einops>=0.6.1,<1.0
 bitsandbytes>=0.39.1,<1.0
-https://download.pytorch.org/whl/cu118/torch-2.0.0%2Bcu118-cp310-cp310-linux_x86_64.whl
-https://download.pytorch.org/whl/cu118/torchaudio-2.0.0%2Bcu118-cp310-cp310-linux_x86_64.whl
+https://download.pytorch.org/whl/cu118/torch-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl
+https://download.pytorch.org/whl/cu118/torchaudio-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl
 # The following are from fairseq
 # antlr4-python3-runtime==4.8
 # bitarray==2.7.3
