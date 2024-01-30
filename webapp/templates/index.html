@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=2.0">
+    <title>Song Search</title>
+    <style>
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        .left-side, .right-side {
+            width: 50%;
+            box-sizing: border-box; /* To include padding and border in the element's total width and height */
+        }
+
+        /* Optional: To visually distinguish the divs */
+        .left-side {
+            background-color: rgb(255, 255, 255);
+            padding: 10px;
+        }
+
+        .right-side {
+            background-color: rgb(255, 255, 255);
+            padding: 10px;
+        }
+
+    </style>
+    <script>
+        let lastTimestamp = null;
+
+        function checkForUpdates() {
+            fetch('/last-modified')
+                .then(response => response.json())
+                .then(data => {
+                    if (lastTimestamp && lastTimestamp !== data.last_modified) {
+                        // Reload the page if a change is detected
+                        location.reload(true);
+                    }
+                    lastTimestamp = data.last_modified;
+                })
+                .catch(error => console.error("Error checking for updates:", error));
+        }
+
+        // Poll every 5 seconds
+        setInterval(checkForUpdates, 1000);
+
+        function playSong(audioId, songPath) {
+            let audioElement = document.getElementById(audioId);
+
+            // Set the source and load the audio
+            audioElement.src = songPath;
+            audioElement.load();
+            audioElement.style.display = "block";
+
+            // Play the audio
+            audioElement.play();
+
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-side">
+            <form method="post" action="/">
+                <input type="text" name="query" placeholder="Search by song title.. " value="{{ query or '' }}">
+                <input type="submit" value="Search">
+            </form>
+            <div>
+                <p>Use tags {artist, title, filename}: </p>
+                <h3>Results</h3>
+                <ul>
+                    {% for song in songs %}
+                    <li>
+                        <div onclick="playSong('{{song['paths']}}', 'stream/{{song['paths']}}')">{{ song['artist'] }} -
+                            {{song['title']}}
+                            <audio id={{song['paths']}} controls style="display: none"></audio>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+        <div class="right-side">
+            <h2>Playlist</h2>
+            <div id="playlist"></div>
+        </div>
+    </div>
+
+
+    
+
+
+    
+
+        
+
+</body>
+<script>
+    let playlist = [];
+    let currentSongIndex = 0;
+
+    function addSong(artist, title, album, trackNumber, filepath) {
+        playlist.push({ artist, title, album, trackNumber, filepath });
+        displayPlaylist();
+    }
+
+    function displayPlaylist() {
+        const playlistElement = document.getElementById('playlist');
+        playlistElement.innerHTML = ''; // Clear existing content
+
+        playlist.forEach((song, index) => {
+            playlistElement.innerHTML += `
+        <div id="song_${index}">
+            <strong>${index + 1}. ${song.title}</strong>
+            <p>Artist: ${song.artist}</p>
+            <p>Album: ${song.album} (Track ${song.trackNumber})</p>
+            <audio controls ${index === currentSongIndex ? 'autoplay' : ''}>
+                <source src="${song.filepath}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    `;
+        });
+
+        // Add event listeners for each song
+        playlist.forEach((song, index) => {
+            const audioElement = document.querySelector(`#song_${index} audio`);
+            audioElement.onended = () => playNextSong(index);
+        });
+    }
+
+    function playNextSong(index) {
+        if (index + 1 < playlist.length) {
+            currentSongIndex = index + 1;
+            displayPlaylist();
+        } else {
+            // Optional: Loop to start
+            currentSongIndex = 0;
+            displayPlaylist();
+        }
+    }
+
+    document.getElementById('myDiv').onclick = function () {
+        // alert('Div clicked!');
+        addSong('Artist Name', 'Song Title', 'Album Title', 1, 'path/to/song.mp3')
+    };
+
+</script>
+</html>
