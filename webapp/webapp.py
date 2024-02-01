@@ -7,7 +7,7 @@ from flask import (
     send_file,
     stream_with_context,
 )
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 from flask_cors import CORS
 import logging
 from search import search
@@ -69,10 +69,10 @@ def index():
     query = None
     if request.method == "POST":
         query = request.form.get("query", "").strip()
-
         if query:
             idx_top_k = search(query)
             top_df = all_music_info_df.loc[idx_top_k]
+            top_df["songPath"] = top_df["paths"].apply(lambda x: quote(x))
             songs = top_df.to_dict(orient="records")
     # Serve the HTML from the templates directory
     return render_template("index.html", songs=songs, query=query)

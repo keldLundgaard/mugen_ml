@@ -27,41 +27,11 @@
             padding: 10px;
         }
 
+        .song-link {
+        }
+
     </style>
-    <script>
-        let lastTimestamp = null;
 
-        function checkForUpdates() {
-            fetch('/last-modified')
-                .then(response => response.json())
-                .then(data => {
-                    if (lastTimestamp && lastTimestamp !== data.last_modified) {
-                        // Reload the page if a change is detected
-                        location.reload(true);
-                    }
-                    lastTimestamp = data.last_modified;
-                })
-                .catch(error => console.error("Error checking for updates:", error));
-        }
-
-        // Poll every 5 seconds
-        setInterval(checkForUpdates, 1000);
-
-        function playSong(audioId, songPath) {
-            let audioElement = document.getElementById(audioId);
-
-            // Set the source and load the audio
-            audioElement.src = songPath;
-            audioElement.load();
-            audioElement.style.display = "block";
-
-            // Play the audio
-            audioElement.play();
-
-        }
-
-
-    </script>
 </head>
 
 <body>
@@ -77,9 +47,9 @@
                 <ul>
                     {% for song in songs %}
                     <li>
-                        <div onclick="playSong('{{song['paths']}}', 'stream/{{song['paths']}}')">{{ song['artist'] }} -
+                        <div class="song-link" onclick="playSong('{{song['songPath']}}', 'stream{{song['songPath']}}')">{{ song['artist'] }} -
                             {{song['title']}}
-                            <audio id={{song['paths']}} controls style="display: none"></audio>
+                            <audio id={{song['songPath']}} controls style="display: none"></audio>
                         </div>
                     </li>
                     {% endfor %}
@@ -94,15 +64,39 @@
     </div>
 
 
-    
-
-
-    
-
-        
-
 </body>
 <script>
+    let lastTimestamp = null;
+
+    function checkForUpdates() {
+        fetch('/last-modified')
+            .then(response => response.json())
+            .then(data => {
+                if (lastTimestamp && lastTimestamp !== data.last_modified) {
+                    // Reload the page if a change is detected
+                    location.reload(true);
+                }
+                lastTimestamp = data.last_modified;
+            })
+            .catch(error => console.error("Error checking for updates:", error));
+    }
+
+    // Poll every 5 seconds
+    setInterval(checkForUpdates, 1000);
+
+    function playSong(audioId, songPath) {
+        let audioElement = document.getElementById(audioId);
+
+        // Set the source and load the audio
+        audioElement.src = songPath;
+        audioElement.load();
+        audioElement.style.display = "block";
+
+        // Play the audio
+        audioElement.play();
+
+    }
+
     let playlist = [];
     let currentSongIndex = 0;
 
