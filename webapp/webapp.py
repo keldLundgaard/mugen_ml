@@ -62,7 +62,6 @@ def stream(music_path):
             decoded_filepath, as_attachment=True, download_name=decoded_filepath
         )
 
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     songs = []
@@ -76,6 +75,18 @@ def index():
             songs = top_df.to_dict(orient="records")
     # Serve the HTML from the templates directory
     return render_template("index.html", songs=songs, query=query)
+
+@app.route("/search", methods=["POST"])
+def search_req():
+    query = request.form.get("query", "").strip()
+    if query:
+        idx_top_k = search(query)
+        top_df = all_music_info_df.loc[idx_top_k]
+        top_df["songPath"] = top_df["paths"].apply(lambda x: quote(x))
+        songs = top_df.to_dict(orient="records")
+    else:
+        songs = dict()
+    return jsonify(songs)
 
 
 @app.route("/last-modified")
