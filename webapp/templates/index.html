@@ -5,18 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=2.0">
     <title>Song Search</title>
-    <style>
+    <!-- <link rel="stylesheet" href="style.css">
+     -->
+     <Style>
+
+        body {
+            /* background-color: #121212; */
+            /* color: #ffffff; */
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* height: 100vh; */
+            margin: 0;
+        }
+
         .container {
             display: flex;
             width: 100%;
         }
 
-        .left-side, .right-side {
+        .left-side,
+        .right-side {
             width: 50%;
-            box-sizing: border-box; /* To include padding and border in the element's total width and height */
+            box-sizing: border-box;
         }
 
-        /* Optional: To visually distinguish the divs */
         .left-side {
             background-color: rgb(255, 255, 255);
             padding: 10px;
@@ -27,10 +41,67 @@
             padding: 10px;
         }
 
-        .song-link {
+        .song-link {}
+         
+        #songDetails{
+            color: rgb(48, 130, 130);
         }
 
-    </style>
+        .playing {
+            font-family: 'Teko', sans-serif;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from {
+            text-shadow: 0 0 20px #a92d2d;
+            }
+            to {
+            text-shadow: 0 0 30px #c13434, 0 0 10px #c74d4d;
+            }
+        }
+        #musicPlayer {
+            background-color: #181818;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px;
+            width: 75%; 
+            margin: auto;
+        }
+
+        audio {
+            width: 100%;
+            /* height: 100%; */
+            /* Adjusts the width of the audio controls to fit the container */
+            /* max-width: 500px; */
+            /* Maximum width of the player */
+        }
+
+        audio::-webkit-media-controls-panel {
+            background-color: #ac3c3c;
+            border-radius: 20px;
+        }
+
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-volume-slider,
+        audio::-webkit-media-controls-mute-button,
+        audio::-webkit-media-controls-timeline {
+            color: #1db954;
+        }
+
+        /* Additional styles for other browsers */
+        audio::--webkit-media-controls-panel,
+        audio::--webkit-media-controls-play-button,
+        audio::--webkit-media-controls-volume-slider,
+        audio::--webkit-media-controls-mute-button,
+        audio::--webkit-media-controls-timeline {
+            background-color: #282828;
+            color: #1db954;
+        }
+     </Style>
 
 </head>
 
@@ -47,10 +118,12 @@
                 <ul>
                     {% for song in songs %}
                     <li>
-                        <div class="song-link" onclick="playSong('{{song['songPath']}}', 'stream{{song['songPath']}}')">{{ song['artist'] }} -
-                            {{song['title']}}
-                            <audio id={{song['songPath']}} controls style="display: none"></audio>
+                        <div 
+                            class="song-link" 
+                            onclick="addSong('{{song['artist']}}', '{{song['title']}}', '{{song['album']}}', '{{song['track number']}}', '{{song['songPath']}}')">
+                            {{ song['artist'] }} - {{song['title']}}
                         </div>
+
                     </li>
                     {% endfor %}
                 </ul>
@@ -58,6 +131,14 @@
 
         </div>
         <div class="right-side">
+            
+            <div id="musicPlayer">
+                <audio id="audioPlayer" controls>
+                    Your browser does not support the audio element.
+                </audio>
+                <div id="songDetails"></div>
+            </div>
+
             <h2>Playlist</h2>
             <div id="playlist"></div>
         </div>
@@ -66,8 +147,6 @@
 
 </body>
 <script>
-    let lastTimestamp = null;
-
     function checkForUpdates() {
         fetch('/last-modified')
             .then(response => response.json())
@@ -80,29 +159,48 @@
             })
             .catch(error => console.error("Error checking for updates:", error));
     }
-
     // Poll every 5 seconds
-    setInterval(checkForUpdates, 1000);
+    setInterval(checkForUpdates, 5000);
 
-    function playSong(audioId, songPath) {
-        let audioElement = document.getElementById(audioId);
 
-        // Set the source and load the audio
-        audioElement.src = songPath;
-        audioElement.load();
-        audioElement.style.display = "block";
-
-        // Play the audio
-        audioElement.play();
-
-    }
+    var currentSong = null;
 
     let playlist = [];
     let currentSongIndex = 0;
 
+    // let lastTimestamp = null;
+    function playSong(artist, title, album, trackNumber, path) {
+            // Assuming 'path' is a direct link to the audio file.
+            // Update the 'src' attribute of the audio element to play the new song
+            var audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = "stream"+path;
+            audioPlayer.type = "audio/mpeg"
+            audioPlayer.load(); // Reloads the audio element to apply the new source
+            audioPlayer.play(); // Play the new song
+            audioPlayer.onended = onSongFinish;
+        }
+
+    function onSongFinish(){
+        clickPlaylist((currentSongIndex + 1) % playlist.length);
+    };
+
     function addSong(artist, title, album, trackNumber, filepath) {
+        let new_playlist = playlist.length === 0
         playlist.push({ artist, title, album, trackNumber, filepath });
         displayPlaylist();
+        if (new_playlist) { 
+            clickPlaylist(0) } 
+            else {
+                document.getElementById("playlist_" + currentSongIndex).classList.add('playing');
+            }
+    }
+
+    function clickPlaylist(index){
+        document.getElementById("playlist_" + currentSongIndex).classList.remove('playing');
+        let song = playlist[index];
+        currentSongIndex = index
+        playSong(song.artist, song.title, song.album, song.trackNumber, song.filepath);
+        document.getElementById("playlist_"+ currentSongIndex).classList.add('playing');
     }
 
     function displayPlaylist() {
@@ -111,40 +209,12 @@
 
         playlist.forEach((song, index) => {
             playlistElement.innerHTML += `
-        <div id="song_${index}">
-            <strong>${index + 1}. ${song.title}</strong>
-            <p>Artist: ${song.artist}</p>
-            <p>Album: ${song.album} (Track ${song.trackNumber})</p>
-            <audio controls ${index === currentSongIndex ? 'autoplay' : ''}>
-                <source src="${song.filepath}" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-        </div>
-    `;
-        });
-
-        // Add event listeners for each song
-        playlist.forEach((song, index) => {
-            const audioElement = document.querySelector(`#song_${index} audio`);
-            audioElement.onended = () => playNextSong(index);
+            <div id="playlist_${index}"  onclick="clickPlaylist(${index})">
+                <p>${song.artist} - ${song.title} (${song.album} - ${song.trackNumber}) </p>
+            </div>
+        `;
         });
     }
-
-    function playNextSong(index) {
-        if (index + 1 < playlist.length) {
-            currentSongIndex = index + 1;
-            displayPlaylist();
-        } else {
-            // Optional: Loop to start
-            currentSongIndex = 0;
-            displayPlaylist();
-        }
-    }
-
-    document.getElementById('myDiv').onclick = function () {
-        // alert('Div clicked!');
-        addSong('Artist Name', 'Song Title', 'Album Title', 1, 'path/to/song.mp3')
-    };
-
+    
 </script>
 </html>
