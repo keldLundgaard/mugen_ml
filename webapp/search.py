@@ -15,16 +15,15 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = "/n4Ta/sc_webapp_data/"
 
-info_path = DATA_DIR + "df_with_mp3_info.tsv.gz"
-if os.path.exists(info_path):
-    w_info_df = pd.read_csv(info_path, sep="\t", compression="gzip")
-
 tfidf_path = DATA_DIR + "tfidf_feats.pckl"
 if os.path.exists(tfidf_path):
     logger.info("Loading tfidf features...")
     tfidf_features = pickle.load(open(tfidf_path, "rb"))
     logger.info("Done")
 else:
+    info_path = DATA_DIR + "df_with_mp3_info.tsv.gz"
+    if os.path.exists(info_path):
+        w_info_df = pd.read_csv(info_path, sep="\t", compression="gzip")
     logger.info("Creating tfidf features")
     tfidf_features = dict()
     for k in ["filename", "title", "artist"]:
@@ -33,7 +32,6 @@ else:
         tfidf_features["X_" + k] = vectorizer.fit_transform(corpus)
         tfidf_features["vectorizer_" + k] = vectorizer
     pickle.dump(tfidf_features, open(tfidf_path, "wb"))
-
 
 def search(query=None, category=None, top_k=50, default_category="filename"):
     """

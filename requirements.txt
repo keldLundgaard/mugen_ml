@@ -18,7 +18,9 @@ miniaudio>=1.52,<2.0
 Flask==2.3.3
 flask-cors==4.0.0
 accelerate>=0.20.3,<1.0
-transformers>=4.30.2,<5.0
+transformers>=4.37.2,<5.0
+auto-gptq>=0.6.0,<1.0
+optimum>=1.16.2,<2.0
 pytorch-lightning>=2.0.0,<3.0
 einops>=0.6.1,<1.0
 bitsandbytes>=0.39.1,<1.0
@@ -26,9 +28,18 @@ fairseq==0.12.2
 tensorboardX==2.6.2.2
 eyed3==0.9.7
 scikit-learn>=1.4.0,<2.0
+flash_attn>=2.5.3,<3.0
+# to find https://download.pytorch.org/whl/<cuda>/torch/
+# e.g. https://download.pytorch.org/whl/cu121/torch/
 
-https://download.pytorch.org/whl/cu118/torch-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl
-https://download.pytorch.org/whl/cu118/torchaudio-2.0.2%2Bcu118-cp310-cp310-linux_x86_64.whl
+https://download.pytorch.org/whl/cu121/torch-2.2.0%2Bcu121-cp310-cp310-linux_x86_64.whl
+https://download.pytorch.org/whl/cu121/torchaudio-2.2.0%2Bcu121-cp310-cp310-linux_x86_64.whl
+# Or alternatively for cp311
+# https://download.pytorch.org/whl/cu121/torch-2.2.0%2Bcu121-cp311-cp311-linux_x86_64.whl
+# https://download.pytorch.org/whl/cu121/torchaudio-2.2.0%2Bcu121-cp311-cp311-linux_x86_64.whl
+# Old cu118
+# https://download.pytorch.org/whl/cu118/torch-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl
+# https://download.pytorch.org/whl/cu118/torchaudio-2.0.2%2Bcu118-cp310-cp310-linux_x86_64.whl
 # The following are from fairseq
 # antlr4-python3-runtime==4.8
 # bitarray==2.7.3

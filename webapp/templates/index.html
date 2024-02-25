@@ -12,10 +12,10 @@
 <body>
     <div class="container">
         <div class="left-side">
-            <form method="post" action="/" id="searchForm">
+            <!-- <form method="post" action="/" id="searchForm">
                 <input type="text" name="query" placeholder="Search by song title.. " value="{{ query or '' }}">
                 <input type="submit" value="Search">
-            </form>
+            </form> -->
             <input 
                 id="SearchBar"
                 type="text" 
@@ -27,17 +27,7 @@
             <div>
                 <p>Use tags {artist, title, filename}: </p>
                 <h3>Results</h3>
-                <ul>
-                    {% for song in songs %}
-                    <li>
-                        <div 
-                            class="song-link" 
-                            onclick="addSong('{{song['artist']}}', '{{song['title']}}', '{{song['album']}}', '{{song['track number']}}', '{{song['songPath']}}')">
-                            {{ song['artist'] }} - {{song['title']}}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+                <ul id="searchResults"></ul>
             </div>
         </div>
         <div class="right-side">
