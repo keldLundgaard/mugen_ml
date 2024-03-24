@@ -2,9 +2,7 @@ function SearchRequest(){
     var formBody = JSON.stringify({
         query: document.getElementById("SearchBar").value,
     });
-    // console.log("Search");
-    // console.log(formBody);
-    // console.log("done")
+
     fetch('/search', {
         method: 'POST',
         headers: {'Content-Type': 'application/json',},
@@ -14,6 +12,18 @@ function SearchRequest(){
         .then(data => displaySearchResults(data))
         .catch(error => console.error('Error:', error));
 };
+
+function SearchRandom() {
+    var searchBar = document.getElementById("SearchBar");
+    searchBar.value = '*random*'; // Directly set the value
+    
+    // Manually dispatch an event if your application relies on it
+    var event = new Event('input', { bubbles: true, cancelable: true });
+    searchBar.dispatchEvent(event);
+    SearchRequest();
+}
+
+
 let lastTimestamp = null;
 function checkForUpdates() {
     fetch('/last-modified')
@@ -45,7 +55,10 @@ function displaySearchResults(songs) {
     const li = document.createElement('li');
     const div = document.createElement('div');
     div.className = 'song-link';
-    div.setAttribute('onclick', `addSong('${song.artist}', '${song.title}', '${song.album}', '${song["track number"]}', '${song.songPath}')`);
+    div.setAttribute(
+        'onclick', 
+        `addSong('${song.artist}', '${song.title}', '${song.album}', '${song["track number"]}', '${song.genre}', 
+        '${song.songPath}')`);
     div.textContent = `${song.artist} - ${song.title}`;
     li.appendChild(div);
     searchResultsUl.appendChild(li);
@@ -73,9 +86,9 @@ if ('mediaSession' in navigator) {
 document.addEventListener('keydown', function(event) {if (event.key === "ArrowLeft") {prevSong();}});
 document.addEventListener('keydown', function(event) {if (event.key === "ArrowRight") {nextSong();}});
 
-function addSong(artist, title, album, trackNumber, filepath) {
+function addSong(artist, title, album, trackNumber, genre, filepath) {
     let new_playlist = playlist.length === 0
-    playlist.push({ artist, title, album, trackNumber, filepath });
+    playlist.push({ artist, title, album, trackNumber, genre, filepath });
     displayPlaylist();
     if (new_playlist) { 
         clickPlaylist(0) } 
@@ -99,7 +112,7 @@ function displayPlaylist() {
     playlist.forEach((song, index) => {
         playlistElement.innerHTML += `
         <div id="playlist_${index}"  onclick="clickPlaylist(${index})">
-            <p>${song.artist} - ${song.title} (${song.album} - ${song.trackNumber}) </p>
+            <p>${song.artist} - ${song.title} [G: ${song.genre}] (${song.album} - ${song.trackNumber}) </p>
         </div>
     `;
     });

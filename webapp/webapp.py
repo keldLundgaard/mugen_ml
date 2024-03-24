@@ -10,11 +10,13 @@ from flask import (
 from urllib.parse import unquote, quote
 from flask_cors import CORS
 import logging
-from search import search
+from search import search, USE_SAMPLE_DATA
 
 import pandas as pd
+import numpy as np
 import os
 
+from options import SONGS_DATA_DF_PATH
 
 app = Flask(__name__)
 CORS(app)
@@ -28,11 +30,9 @@ DATA_WEBAPP_DIR = "/n4Ta/sc_webapp_data/"
 logger = logging.getLogger(__name__)
 app.logger.setLevel(logging.INFO)
 
-info_df_path = DATA_WEBAPP_DIR + "df_with_mp3_info.tsv.gz"
-
 app.logger.info(f"Loading music df...")
 all_music_info_df = pd.read_csv(
-    info_df_path,
+    SONGS_DATA_DF_PATH,
     compression="gzip",
     sep="\t",
     low_memory=False,
@@ -71,7 +71,10 @@ def search_req():
     data = request.get_json()
     query = data.get("query", "").strip() if data else ""
     if query:
-        idx_top_k = search(query)
+        if query == "*random*":
+            idx_top_k = np.random.randint(len(all_music_info_df), size=20)
+        else:
+            idx_top_k = search(query, all_music_info_df)
         top_df = all_music_info_df.loc[idx_top_k]
         top_df["songPath"] = top_df["paths"].apply(lambda x: quote(x))
         songs = top_df.fillna("").to_dict(orient="records")

@@ -12,10 +12,6 @@
 <body>
     <div class="container">
         <div class="left-side">
-            <!-- <form method="post" action="/" id="searchForm">
-                <input type="text" name="query" placeholder="Search by song title.. " value="{{ query or '' }}">
-                <input type="submit" value="Search">
-            </form> -->
             <input 
                 id="SearchBar"
                 type="text" 
@@ -23,9 +19,9 @@
                 placeholder="Search by song title.. " 
                 value="{{ query or '' }}"
                 onChange="SearchRequest()"
-            >
+            > <span onClick="SearchRandom()">🎲</span>
             <div>
-                <p>Use tags {artist, title, filename}: </p>
+                <p>Use tags {artist, title, filename}
                 <h3>Results</h3>
                 <ul id="searchResults"></ul>
             </div>
