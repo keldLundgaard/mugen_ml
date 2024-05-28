@@ -10,19 +10,22 @@ from flask import (
 from urllib.parse import unquote, quote
 from flask_cors import CORS
 import logging
-from search import search, USE_SAMPLE_DATA
 
 import pandas as pd
 import numpy as np
 import os
+import pickle
 
 from options import SONGS_DATA_DF_PATH
+from search import search, USE_SAMPLE_DATA
+
 
 app = Flask(__name__)
 CORS(app)
 # MUSIC_BASE_DIR = "/d16Tb/soundcloud_music/files/"
 DATA_DIR = "/home/keld/projects/music_gen/sc_scrape/data/"
 DATA_WEBAPP_DIR = "/n4Ta/sc_webapp_data/"
+
 
 # archive_tracker_path = "/d16Tb/soundcloud_music/archive_tracker"
 # out_path = "/d16Tb/soundcloud_music/files/"
@@ -39,6 +42,9 @@ all_music_info_df = pd.read_csv(
 )
 app.logger.info(f"Done")
 
+user_data = pickle.load(open(DATA_WEBAPP_DIR + "keld_interests.pckl", "rb"))
+# pickle.dump({}, open(DATA_WEBAPP_DIR+"keld_interests.pckl", "wb"))
+
 
 def stream_audio(filepath):
     with open(filepath, "rb") as f:
@@ -53,7 +59,7 @@ def stream_audio(filepath):
 def stream(music_path):
     app.logger.info(f"call stream")
     # MUSIC_BASE_DIR +
-    print(music_path)
+    # print(music_path)
     decoded_filepath = unquote("/" + music_path)
     if 0:
         return Response(stream_audio(decoded_filepath), content_type="audio/mpeg")
@@ -70,18 +76,25 @@ def index():
 def search_req():
     data = request.get_json()
     query = data.get("query", "").strip() if data else ""
+    idx_top_k = []
     if query:
         if query == "*random*":
             idx_top_k = np.random.randint(len(all_music_info_df), size=20)
         else:
             idx_top_k = search(query, all_music_info_df)
-        top_df = all_music_info_df.loc[idx_top_k]
-        top_df["songPath"] = top_df["paths"].apply(lambda x: quote(x))
-        songs = top_df.fillna("").to_dict(orient="records")
-    else:
-        songs = dict()
-    return jsonify(songs)
 
+    idx_top_k = [int(i) for i in idx_top_k]
+
+    return jsonify(idx_top_k)
+
+@app.route("/get_song_info", methods=["POST"])
+def get_song_info():
+    data = request.get_json()
+    song_ids = data.get("song_ids", [])
+    df = all_music_info_df.iloc[song_ids]
+    df["song_id"] = song_ids
+    songs = df.fillna("").to_dict(orient="records")
+    return jsonify(songs)
 
 @app.route("/last-modified")
 def last_modified():

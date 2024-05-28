@@ -38,35 +38,40 @@ else:
 
 def search(query=None, songs_df=None, categories=None, top_k=50):
     """
-    Performs an enhanced search on a songs DataFrame using TF-IDF features to find items matching a given query,
-    within specified categories. It supports both exact and full-text searches, allowing users to narrow down
-    the search results to the top 'k' items most relevant to the query.
+    Performs an enhanced search on a songs DataFrame using TF-IDF features to 
+    find items matching a given query, within specified categories. It supports 
+    both exact and full-text searches, allowing users to narrow down the search 
+    results to the top 'k' items most relevant to the query.
 
-    The function requires a pre-processed DataFrame where each song's information is indexed and associated with
-    TF-IDF features for efficient text-based searching.
+    The function requires a pre-processed DataFrame where each song's information 
+    is indexed and associated with TF-IDF features for efficient text-based 
+    searching.
 
     Args:
-        query (str): The query string to search for. This can include both exact matches (enclosed in quotes) and
-            general search terms.
+        query (str): The query string to search for. This can include both exact 
+            matches (enclosed in quotes) and general search terms.
         songs_df (pd.DataFrame): The DataFrame containing songs information. 
-            Each row represents a song, and columns should include details 
-            such as 'filename', 'title', 'artist', among others specified
-            in 'categories'.
-        categories (list of str, optional): The categories (columns in 'songs_df') to search within. This must be a
-            subset of the DataFrame's columns. Default searches across ['filename',
-            'title', 'artist'].
-        top_k (int): The number of top results to return. Determines the 'k' highest scoring 
-            items based on the search query's relevance. Defaults to 50.
+            Each row represents a song, and columns should include details such 
+            as 'filename', 'title', 'artist', among others specified in 
+            'categories'.
+        categories (list of str, optional): The categories (columns in 'songs_df') 
+            to search within. This must be a subset of the DataFrame's columns. 
+            Default searches across ['filename', 'title', 'artist'].
+        top_k (int): The number of top results to return. Determines the 'k' 
+            highest scoring items based on the search query's relevance. Defaults 
+            to 50.
 
     Returns:
-        dict: A dictionary with categories (from 'categories' argument or default set) as keys and 
-            lists of indices (from 'songs_df') for the top 'k' items based on the search query as values. 
-            The indices correspond to rows in 'songs_df' that best match the search criteria.
+        dict: A dictionary with categories (from 'categories' argument or default 
+            set) as keys and lists of indices (from 'songs_df') for the top 'k' 
+            items based on the search query as values. The indices correspond to 
+            rows in 'songs_df' that best match the search criteria.
 
     Note:
-        The search functionality is heavily reliant on the structure and preprocessing of 'songs_df', including the
-        presence of TF-IDF features. Ensure that 'songs_df' is properly preprocessed with TF-IDF vectors for each
-        searchable category.
+        The search functionality is heavily reliant on the structure and 
+        preprocessing of 'songs_df', including the presence of TF-IDF features. 
+        Ensure that 'songs_df' is properly preprocessed with TF-IDF vectors for 
+        each searchable category.
     """
     parsed_query = parse_query(query)
     results = {}
@@ -96,14 +101,12 @@ def search(query=None, songs_df=None, categories=None, top_k=50):
             tfidf_ma = tfidf_features[f"X_{tag}"]
             tfidf_matched_ma = tfidf_ma[matches, :]  # operate in match space
             vectorizer = tfidf_features[f"vectorizer_{tag}"]
-            print(tfidf_ma.shape, tfidf_matched_ma.shape)
 
             query_vec = vectorizer.transform(tag_queries)
             tag_scores = (
                 np.array(tfidf_matched_ma.dot(query_vec.T).T.todense())
                 .sum(axis=0)
                 )
-            print(tag_scores.shape)
             scores = tag_scores if scores is None else scores + tag_scores
 
     if scores is None:
@@ -123,20 +126,25 @@ def search(query=None, songs_df=None, categories=None, top_k=50):
 
 def parse_query(query):
     """
-        Parses a query string into categorized search directives for efficient searching within a large music database.
-    The function supports exact search directives (where search terms must exactly match values in the database)
-    and full-text search directives (where search terms are matched based on text similarity).
+    Parses a query string into categorized search directives for efficient
+    searching within a large music database. The function supports exact search
+    directives (where search terms must exactly match values in the database)
+    and full-text search directives (where search terms are matched based on
+    text similarity).
 
     Args:
-        query (str): The input query string, which can include directives for exact matches (enclosed in single or
-                     double quotes) and general search terms. Directives can be separated by semicolons (';').
-                     Short-hand notations for certain search fields (e.g., 'g' for 'genre', 'a' for 'artist') are
-                     also supported.
+        query (str): The input query string, which can include directives for
+            exact matches (enclosed in single or double quotes) and general
+            search terms. Directives can be separated by semicolons (';').
+            Short-hand notations for certain search fields (e.g., 'g' for
+            'genre', 'a' for 'artist') are also supported.
 
     Returns:
-        dict: A dictionary containing categorized search directives. The dictionary includes keys such as 'exact'
-              for exact search directives, 'full-text' for full-text search directives, and 'general-full-text' for
-              general search terms. The values are structured to facilitate efficient search implementation.
+        dict: A dictionary containing categorized search directives. The
+            dictionary includes keys such as 'exact' for exact search
+            directives, 'full-text' for full-text search directives, and
+            'general-full-text' for general search terms. The values are
+            structured to facilitate efficient search implementation.
 
     Examples:
 
@@ -161,10 +169,12 @@ def parse_query(query):
     {'exact': {}, 'full-text': {}, 'general-full-text': ['1973']}
 
     Note:
-        The parsing logic differentiates between exact and full-text searches based on the presence of quotation
-        marks around search terms. It also supports the use of short-hand notations for commonly searched fields,
+        The parsing logic differentiates between exact and full-text searches
+        based on the presence of quotation marks around search terms. It also
+        supports the use of short-hand notations for commonly searched fields,
         enhancing the usability of the search function.
     """
+
     # Define sets of tags for exact search and full-text search
 
     short_hands = {
