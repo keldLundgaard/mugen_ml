@@ -320,3 +320,39 @@ input:checked+.slider:before {
     margin-left: 10px;
     font-size: 14px;
 }
+
+
+/* Playing styling */
+.playing {
+    background-color: #e6f7ff;
+    /* Light blue background */
+    border-left: 4px solid #1db954;
+    /* Green left border, matching your theme color */
+    font-weight: bold;
+    color: #1db954;
+    /* Green text color */
+    padding-left: 10px;
+    /* Add some padding to offset the border */
+    transition: all 0.3s ease;
+    /* Smooth transition for hover effects */
+}
+
+.playing:hover {
+    background-color: #d1f0ff;
+    /* Slightly darker blue on hover */
+}
+
+/* If you want to add an icon or text to indicate it's playing */
+.playing::before {
+    content: '▶️';
+    /* You can use a unicode character or an icon font */
+    margin-right: 5px;
+}
+
+/* Ensure the text doesn't overflow */
+.playing p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
