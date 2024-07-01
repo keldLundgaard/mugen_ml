@@ -90,8 +90,11 @@ h1 {
 }
 
 .search-results {
-    overflow-y: auto;
+}
+
+#searchResults {
     max-height: calc(100vh - 200px);
+    overflow-y: auto;
 }
 
 /* Music Player Styles */
@@ -124,18 +127,14 @@ audio {
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+    /* Add this to prevent content from overflowing */
 }
 
 #playlist,
 #pinnedSongs {
     overflow-y: auto;
     flex: 1;
-}
-
-.clear-playlist {
-    font-size: 14px;
-    color: #666;
-    cursor: pointer;
 }
 
 .playlist-song,
@@ -154,28 +153,22 @@ audio {
     text-overflow: ellipsis;
     margin: 0;
     flex: 1;
-}
-
-.results_action {
-    width: 16px;
+    padding-right: 10px;
+    /* Add some padding to prevent text from touching the actions */
 }
 
 .song-actions {
     display: flex;
     gap: 5px;
     flex-shrink: 0;
-    width: 10px;
 }
 
+/* Ensure the action buttons don't wrap */
 .remove-icon,
 .pin-icon {
     cursor: pointer;
     font-size: 16px;
-}
-
-.playing {
-    color: #1db954;
-    font-weight: bold;
+    flex-shrink: 0;
 }
 
 /* Table Styles */

@@ -36,7 +36,7 @@ else:
     pickle.dump(tfidf_features, open(tfidf_path, "wb"))
 
 
-def search(query=None, songs_df=None, categories=None, top_k=50):
+def search(query=None, songs_df=None, categories=None, top_k=200):
     """
     Performs an enhanced search on a songs DataFrame using TF-IDF features to 
     find items matching a given query, within specified categories. It supports 
