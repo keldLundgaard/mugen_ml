@@ -3,41 +3,55 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=2.0">
-    <title>MuGen</title>
-    <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuGen - Music Generator</title>
+    <meta name="description" content="Discover and play your favorite songs with MuGen.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div class="container">
         <div class="left-side">
-            <input 
-                id="SearchBar"
-                type="text" 
-                name="query" 
-                placeholder="Search by song title.. " 
-                value="{{ query or '' }}"
-                onChange="SearchRequest()"
-            > <span onClick="SearchRandom()">🎲</span>
-            <div>
-                <p>Use tags {artist, title, filename}
+            <h1>MuGen</h1>
+            <div class="search-container">
+                <input id="SearchBar" type="text" name="query" placeholder="Search by song title..."
+                    value="{{ query or '' }}" onChange="SearchRequest()" aria-label="Search by song title">
+                <button onClick="SearchRandom()" aria-label="Search randomly" class="random-button">🎲</button>
+            </div>
+            <p class="search-tip">Use tags {artist, title, filename}</p>
+            <div id="fansAlsoLike" class="fans-also-like"></div>
+            <div id="search_results" class="search-results">
                 <h3>Results</h3>
-                <ul id="searchResults"></ul>
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="albumTrackToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Show Album/Track</span>
+                </div>
+                <div id="searchResults"></div>
             </div>
         </div>
         <div class="right-side">
-            <div id="musicPlayer">
+            <div id="musicPlayer" class="music-player">
                 <audio id="audioPlayer" controls>Audio unsupported</audio>
-                <div id="songDetails"></div>
+                <div id="songDetails" class="song-details"></div>
             </div>
-            <div id="playlistContainer">
-                <h2 onclick="clearPlaylist()">Playlist (clear)</h2>
-                <div id="playlist"> </div>
+            <div class="lists-container">
+                <div id="playlistContainer" class="playlist-container">
+                    <h4 onclick="clearPlaylist()">Playlist <span class="clear-playlist">(clear)</span></h4>
+                    <div id="playlist"></div>
+                </div>
+                <div id="pinnedSongsContainer" class="pinned-songs-container">
+                    <h4>Pinned Songs</h4>
+                    <div id="pinnedSongs"></div>
+                </div>
             </div>
         </div>
     </div>
-
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </body>
-<script src={{ url_for('static', filename='scripts.js') }}></script>
+
 </html>

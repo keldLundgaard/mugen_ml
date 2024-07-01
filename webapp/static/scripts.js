@@ -1,3 +1,9 @@
+let searchTimeout;
+document.getElementById("SearchBar").addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(SearchRequest, 300);
+});
+
 function SearchRequest() {
     const query = document.getElementById("SearchBar").value;
 
@@ -20,18 +26,61 @@ function SearchRequest() {
             return response.json();
         })
         .then(data => displaySearchResults(data))
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while searching. Please try again.');
+        });
 }
 
 function SearchRandom() {
+    SearchQuery('*random*')
+}
+
+function SearchQuery(query) {
     var searchBar = document.getElementById("SearchBar");
-    searchBar.value = '*random*'; // Directly set the value
+    searchBar.value = query; // Directly set the value
     
     // Manually dispatch an event if your application relies on it
     var event = new Event('input', { bubbles: true, cancelable: true });
     searchBar.dispatchEvent(event);
     SearchRequest();
 }
+
+function SearchFansAlsoLike(sc_user){
+    var formBody = JSON.stringify({
+        sc_user: sc_user,
+    });
+  fetch('/get_fans_also_like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: formBody,
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => displayFansAlsoLike(data))
+        .catch(error => console.error);
+} 
+
+function displayFansAlsoLike(user_list){
+  console.log(user_list)
+  const fansAlsoLikeDiv = document.getElementById('fansAlsoLike');
+  fansAlsoLikeDiv.innerHTML = '<h4>Fans also like <span onclick="removeFansAlsoLike()">❌</span></h4><ul>';
+  user_list.forEach(sc_user => {
+        fansAlsoLikeDiv.innerHTML += `
+        <li onclick="userSearch('${sc_user}')">${sc_user}</li>`;
+    });
+  fansAlsoLikeDiv.innerHTML += '</ul>';
+}
+
+function removeFansAlsoLike() {
+  const fansAlsoLikeDiv = document.getElementById('fansAlsoLike');
+  fansAlsoLikeDiv.innerHTML =''
+}
+
 
 let lastTimestamp = null;
 function checkForUpdates() {
@@ -49,71 +98,47 @@ function checkForUpdates() {
 setInterval(checkForUpdates, 2000); // How often to pull in ms 
 
 let playlist = [];
-let currentSongIndex = 0;
+let currentSongIndex = null;
 
-function clearPlaylist(){
-    playlist = [];
-    displayPlaylist();
-};
-
-
-
-// async function displaySearchResults(song_ids) {
-//   const searchResultsUl = document.getElementById('searchResults');
-//   searchResultsUl.innerHTML = '';
-
-//    // Create table
-//     try {
-//         const songs = await get_song_ids_info(song_ids);
-//         songs.forEach(song => {
-//             const li = document.createElement('li');
-//             const div = document.createElement('div');
-//             div.className = 'song-link';
-//             div.setAttribute(
-//                 'onclick', 
-//                 `addSong(
-//                     '${song.artist}', 
-//                     '${song.title}', 
-//                     '${song.album}', 
-//                     '${song["track number"]}', 
-//                     '${song.genre}', 
-//                 '${song.songPath}')`);
-//             div.textContent = `${song.artist} - ${song.title}`;
-//             li.appendChild(div);
-//             searchResultsUl.appendChild(li);
-//         });
-//     } catch (error) {
-//     console.error('Error:', error);
-//   }
-// }
+function userSearch(sc_user){
+  SearchQuery("u: '"+ sc_user+"'");
+  SearchFansAlsoLike(sc_user);
+}
 
 async function displaySearchResults(song_ids) {
   const searchResultsDiv = document.getElementById('searchResults');
+  const albumTrackToggle = document.getElementById('albumTrackToggle');
   searchResultsDiv.innerHTML = '';
 
   try {
     const songs = await get_song_ids_info(song_ids);
 
-    if (songs) {
-      // Create table
+    if (songs && songs.length > 0) {
       const table = document.createElement('table');
       table.className = 'song-table';
 
-      // Create header row
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
       const headers = [
-        { text: 'Artist', key: 'artist' },
-        { text: 'Title', key: 'title' },
-        { text: 'Album', key: 'album' },
-        { text: 'Track Number', key: 'track number' },
-        { text: 'Genre', key: 'genre' }
+        { text: 'User', key: 'user', class: 'search_results_user' },
+        { text: 'Artist', key: 'artist', class: 'search_results_artist' },
+        { text: 'Title', key: 'title', class: 'search_results_title' },
+        { text: 'Genre', key: 'genre', class: 'search_results_genre' },
+        { text: '', key: 'action', class: 'results_action' }
       ];
+
+      if (albumTrackToggle.checked) {
+        headers.splice(3, 0, 
+          { text: 'Album', key: 'album', class: 'search_results_album' },
+          { text: 'Track', key: 'track number', class: 'search_results_track' }
+        );
+      }
 
       headers.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header.text;
         th.dataset.key = header.key;
+        th.className = header.class;
         th.style.cursor = 'pointer';
         th.addEventListener('click', () => sortTableByColumn(table, header.key));
         headerRow.appendChild(th);
@@ -122,50 +147,64 @@ async function displaySearchResults(song_ids) {
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
-      // Create body rows
       const tbody = document.createElement('tbody');
 
       songs.forEach(song => {
         const row = document.createElement('tr');
 
-        const artistCell = document.createElement('td');
-        artistCell.textContent = song.artist;
-        row.appendChild(artistCell);
+        headers.forEach(header => {
+          const cell = document.createElement('td');
+          cell.className = header.class;
 
-        const titleCell = document.createElement('td');
-        titleCell.textContent = song.title;
-        row.appendChild(titleCell);
+          switch (header.key) {
+            case 'user':
+              cell.textContent = song.sc_user;
+              cell.addEventListener('click', () => userSearch(song.sc_user));
+              break;
+            case 'artist':
+              cell.textContent = song.artist;
+              cell.addEventListener('click', () => SearchQuery(`a: '${song.artist}'`));
+              break;
+            case 'title':
+              cell.textContent = song.title;
+              break;
+            case 'album':
+              cell.textContent = song.album;
+              cell.addEventListener('click', () => SearchQuery(`album: '${song.album}'`));
+              break;
+            case 'track number':
+              cell.textContent = song["track number"];
+              break;
+            case 'genre':
+              cell.textContent = song.genre;
+              break;
+            case 'action':
+              const addIcon = document.createElement('span');
+              addIcon.textContent = '▶️';
+              addIcon.onclick = () => addSong(song.song_id);
+              cell.appendChild(addIcon);
+              break;
+          }
 
-        const albumCell = document.createElement('td');
-        albumCell.textContent = song.album;
-        row.appendChild(albumCell);
-
-        const trackNumberCell = document.createElement('td');
-        trackNumberCell.textContent = song["track number"];
-        row.appendChild(trackNumberCell);
-
-        const genreCell = document.createElement('td');
-        genreCell.textContent = song.genre;
-        row.appendChild(genreCell);
-
-        const actionCell = document.createElement('td');
-        const addButton = document.createElement('button');
-        addButton.textContent = 'Add';
-        addButton.setAttribute(
-          'onclick',
-          `addSong('${song.song_id}')`
-        );
-        actionCell.appendChild(addButton);
-        row.appendChild(actionCell);
+          row.appendChild(cell);
+        });
 
         tbody.appendChild(row);
       });
 
       table.appendChild(tbody);
+
+      albumTrackToggle.addEventListener('change', () => {
+        displaySearchResults(song_ids);
+      });
+
       searchResultsDiv.appendChild(table);
+    } else {
+      searchResultsDiv.textContent = 'No results found.';
     }
   } catch (error) {
     console.error('Error:', error);
+    searchResultsDiv.textContent = 'An error occurred while fetching results.';
   }
 }
 
@@ -201,6 +240,95 @@ function getColumnIndex(columnKey) {
 }
 
 
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('nexttrack', function() {nextSong();});
+  navigator.mediaSession.setActionHandler('previoustrack', function() {prevSong();});
+}
+// document.addEventListener('keydown', function(event) {if (event.key === "ArrowLeft") {prevSong();}});
+// document.addEventListener('keydown', function(event) {if (event.key === "ArrowRight") {nextSong();}});
+
+
+async function clickPlaylist(index){
+  if (currentSongIndex !== null){
+    document.getElementById("playlist_" + currentSongIndex).classList.remove('playing');
+  }
+  let song_id = playlist[index];
+  currentSongIndex = index
+  try {
+          const songs = await get_song_ids_info([song_id]);
+          if (songs.length > 0) {
+              playSong(songs[0].paths);
+          }
+  } catch (error) {
+      console.error('Error:', error);
+  }
+  document.getElementById("playlist_"+ currentSongIndex).classList.add('playing');
+}
+
+function onSongFinish(){nextSong();};
+function prevSong(){clickPlaylist((playlist.length + currentSongIndex - 1) % playlist.length);};
+function nextSong(){clickPlaylist((currentSongIndex + 1) % playlist.length);};
+
+function playSong(path) {
+        var audioPlayer = document.getElementById('audioPlayer');
+        audioPlayer.src = "stream"+path;
+        audioPlayer.type = "audio/mpeg"
+        audioPlayer.load(); // Reloads the audio element to apply the new source
+        audioPlayer.play(); // Play the new song
+        audioPlayer.onended = onSongFinish;
+    }
+
+function clearPlaylist(){
+    playlist = [];
+    currentSongIndex=null;
+    const playlistElement = document.getElementById('playlist');
+    playlistElement.innerHTML = ""
+};
+
+async function PlaylistAddSong(song_id) {
+  const playlistElement = document.getElementById('playlist');
+  const index = playlist.length;
+  try {
+    const songs_to_add = await get_song_ids_info([song_id]);
+    songs_to_add.forEach(song => {
+        playlistElement.innerHTML += `
+        <div class="playlist-song" id="playlist_${index-1}">
+            <p onclick="clickPlaylist(${index-1})">${song.artist} - ${song.title}</p>
+            <div class="song-actions">
+                <span class="remove-icon" onclick="playlistRemoveSong(${index-1})">❌</span>
+                <span class="pin-icon" onclick="pinSong('${song.song_id}')">📌</span>
+            </div>
+        </div>`
+    });
+
+    if (index === 1) {
+      clickPlaylist(0);
+    }
+  
+  } catch (error) {
+      console.error('Error:', error);
+  }
+}
+
+function addSong(song_id) {
+    let new_playlist = playlist.length === 0
+    playlist.push(song_id);
+    PlaylistAddSong(song_id);
+}
+
+function playlistRemoveSong(index) {
+  if (index === currentSongIndex) {
+    currentSongIndex=null
+  }
+  playlist.splice(index, 1);
+  
+  const playlistElement = document.getElementById(`playlist_${index}`);
+  if (playlistElement) {
+    playlistElement.parentNode.removeChild(playlistElement);
+  }
+
+}
+
 function get_song_ids_info(song_ids) {
     var formBody = JSON.stringify({
         song_ids: song_ids,
@@ -222,72 +350,86 @@ function get_song_ids_info(song_ids) {
     });
 }
 
+// Pinned songs...
 
-function onSongFinish(){nextSong();};
-function prevSong(){clickPlaylist((playlist.length + currentSongIndex - 1) % playlist.length);};
-function nextSong(){clickPlaylist((currentSongIndex + 1) % playlist.length);};
+let pinnedSongs = [];
 
-if ('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('nexttrack', function() {nextSong();});
-  navigator.mediaSession.setActionHandler('previoustrack', function() {prevSong();});
-}
-// document.addEventListener('keydown', function(event) {if (event.key === "ArrowLeft") {prevSong();}});
-// document.addEventListener('keydown', function(event) {if (event.key === "ArrowRight") {nextSong();}});
-
-function addSong(song_id) {
-    let new_playlist = playlist.length === 0
-    playlist.push({song_id});
-    displayPlaylist();
-    if (new_playlist) { 
-        clickPlaylist(0) } 
-        else {
-            document.getElementById("playlist_" + currentSongIndex).classList.add('playing');
-        }
-}
-
-async function clickPlaylist(index){
-    document.getElementById("playlist_" + currentSongIndex).classList.remove('playing');
-    console.log(playlist);
-    let song_id_obj = playlist[index];
-    currentSongIndex = index
-    try {
-            const songs = await get_song_ids_info([song_id_obj.song_id]);
-            if (songs.length > 0) {
-                playSong(songs[0].paths);
+function pinSong(song_id) {
+    if (!pinnedSongs.includes(song_id)) {
+        fetch('/pin_song', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ song_id: song_id })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to pin song');
             }
-    } catch (error) {
-        console.error('Error:', error);
+            return response.json();
+        })
+        .then(data => {
+            pinnedSongs = data.pinnedSongs;
+            displayPinnedSongs();
+        })
+        .catch(error => console.error('Error pinning song:', error));
     }
-    document.getElementById("playlist_"+ currentSongIndex).classList.add('playing');
 }
 
-function playSong(path) {
-        var audioPlayer = document.getElementById('audioPlayer');
-        audioPlayer.src = "stream"+path;
-        audioPlayer.type = "audio/mpeg"
-        audioPlayer.load(); // Reloads the audio element to apply the new source
-        audioPlayer.play(); // Play the new song
-        audioPlayer.onended = onSongFinish;
-    }
+        // <div class="playlist-song" id="playlist_${index-1}">
+        //     <p onclick="clickPlaylist(${index-1})">${song.artist} - ${song.title}</p>
+        //     <span class="remove-icon" onclick="playlistRemoveSong(${index-1})">❌</span>
+        //     <span class="pin-icon" onclick="pinSong('${song.song_id}')">📌</span>
+        // </div>`;
 
+function unpinSong(song_id) {
+    fetch('/unpin_song', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_id: song_id })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to unpin song');
+        }
+        return response.json();
+    })
+    .then(data => {
+        pinnedSongs = data.pinnedSongs;
+        displayPinnedSongs();
+    })
+    .catch(error => console.error('Error unpinning song:', error));
+}
 
-async function displayPlaylist() {
-    const playlistElement = document.getElementById('playlist');
-    playlistElement.innerHTML = ''; // Clear existing content
+async function displayPinnedSongs() {
+    const pinnedSongsContainer = document.getElementById('pinnedSongs');
+    pinnedSongsContainer.innerHTML = ''; // Clear existing content
 
     try {
-        for (let index = 0; index < playlist.length; index++) {
-            const song_id_obj = playlist[index];
-            const songs = await get_song_ids_info([song_id_obj.song_id]); // Assuming song_id_obj contains song_id
+        const songs = await get_song_ids_info(pinnedSongs); // Assuming song_id_obj contains song_id
+        songs.forEach((song, index) => {
+            pinnedSongsContainer.innerHTML += `
+            <div class="pinned-song">
+                <p onclick="addSong('${pinnedSongs[index]}')">${song.artist} - ${song.title}</p>
+                <span onclick="unpinSong('${pinnedSongs[index]}')">❌</span>
+            </div>`;
+        });
 
-            songs.forEach(song => {
-                playlistElement.innerHTML += `
-                <div id="playlist_${index}" onclick="clickPlaylist(${index})">
-                    <p>${song.artist} - ${song.title} </p>
-                </div>`;
-            });
-        }
     } catch (error) {
         console.error('Error:', error);
     }
 }
+
+async function fetchPinnedSongs() {
+    fetch('/get_pinned_songs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        pinnedSongs = data.pinnedSongs;
+        displayPinnedSongs();
+    })
+    .catch(error => console.error('Error fetching pinned songs:', error));
+}
+
+document.addEventListener('DOMContentLoaded', fetchPinnedSongs);

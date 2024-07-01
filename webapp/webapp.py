@@ -16,7 +16,7 @@ import numpy as np
 import os
 import pickle
 
-from options import SONGS_DATA_DF_PATH
+from options import SONGS_DATA_DF_PATH, USER_DATA_PATH
 from search import search, USE_SAMPLE_DATA
 
 
@@ -29,21 +29,22 @@ DATA_WEBAPP_DIR = "/n4Ta/sc_webapp_data/"
 
 # archive_tracker_path = "/d16Tb/soundcloud_music/archive_tracker"
 # out_path = "/d16Tb/soundcloud_music/files/"
-# data_obj_path = f"{DATA_DIR}sc_data_v2.pckl"
+data_obj_path = f"{DATA_DIR}sc_data_v2.pckl"
+
+data_all = pickle.load(open(data_obj_path, 'rb'))
+
 logger = logging.getLogger(__name__)
 app.logger.setLevel(logging.INFO)
 
 app.logger.info(f"Loading music df...")
-all_music_info_df = pd.read_csv(
-    SONGS_DATA_DF_PATH,
-    compression="gzip",
-    sep="\t",
-    low_memory=False,
-)
+all_music_info_df = pd.read_parquet(SONGS_DATA_DF_PATH)
 app.logger.info(f"Done")
 
-user_data = pickle.load(open(DATA_WEBAPP_DIR + "keld_interests.pckl", "rb"))
-# pickle.dump({}, open(DATA_WEBAPP_DIR+"keld_interests.pckl", "wb"))
+user_data = pickle.load(open(USER_DATA_PATH, "rb"))
+
+
+def save_user_data(user_data):
+    pickle.dump(user_data, open(USER_DATA_PATH, "wb"))
 
 
 def stream_audio(filepath):
@@ -106,6 +107,37 @@ def last_modified():
         )
     )
     return jsonify({"last_modified": timestamp})
+
+
+@app.route("/get_fans_also_like", methods=["POST"])
+def get_fans_also_like():
+    data = request.get_json()
+    return jsonify(data_all["fans_also_like"].get(data["sc_user"], []))
+
+@app.route("/get_pinned_songs", methods=["POST"])
+def get_pinned_songs():
+    return jsonify({"pinnedSongs": user_data.get("pinned_song_ids", [])})
+
+@app.route("/pin_song", methods=["POST"])
+def pin_song():
+    data = request.get_json()
+    pinned_songs = user_data.get("pinned_song_ids", [])
+    pinned_songs.append(int(data["song_id"]))
+    user_data["pinned_song_ids"] = pinned_songs
+    save_user_data(user_data)
+    return jsonify({"pinnedSongs": user_data.get("pinned_song_ids", [])})
+
+@app.route("/unpin_song", methods=["POST"])
+def unpin_song():
+    data = request.get_json()
+    unping_song_id = int(data["song_id"])
+
+    pinned_songs = user_data.get("pinned_song_ids", [])
+    user_data["pinned_song_ids"] = [
+        song_id for song_id in pinned_songs if song_id != unping_song_id
+    ]
+    save_user_data(user_data)
+    return jsonify({"pinnedSongs": user_data.get("pinned_song_ids", [])})
 
 
 if __name__ == "__main__":
