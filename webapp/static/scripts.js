@@ -257,7 +257,7 @@ async function clickPlaylist(index){
   try {
           const songs = await get_song_ids_info([song_id]);
           if (songs.length > 0) {
-              playSong(songs[0].paths);
+              playSong(songs[0]);
           }
   } catch (error) {
       console.error('Error:', error);
@@ -269,14 +269,28 @@ function onSongFinish(){nextSong();};
 function prevSong(){clickPlaylist((playlist.length + currentSongIndex - 1) % playlist.length);};
 function nextSong(){clickPlaylist((currentSongIndex + 1) % playlist.length);};
 
-function playSong(path) {
-        var audioPlayer = document.getElementById('audioPlayer');
-        audioPlayer.src = "stream"+path;
-        audioPlayer.type = "audio/mpeg"
-        audioPlayer.load(); // Reloads the audio element to apply the new source
-        audioPlayer.play(); // Play the new song
-        audioPlayer.onended = onSongFinish;
-    }
+function playSong(song_obj) {
+  var audioPlayer = document.getElementById('audioPlayer');
+  audioPlayer.src = "stream" + song_obj.paths;
+  audioPlayer.type = "audio/mpeg";
+  audioPlayer.load();
+  audioPlayer.play();
+  audioPlayer.onended = onSongFinish;
+
+  // Update song details
+  const songDetailsDiv = document.getElementById('songDetails');
+  songDetailsDiv.innerHTML = `
+    <div class="song-title">${song_obj.title}</div>
+    <div class="song-artist" onclick="SearchQuery('a: ${song_obj.artist}')">${song_obj.artist}</div>
+    ${song_obj.album ? `<div class="song-album" onclick="SearchQuery('album: ${song_obj.album}')">Album: ${song_obj.album}${song_obj['track number'] ? ` (Track ${song_obj['track number']})` : ''}</div>` : ''}
+    <div class="song-info">
+      <span>Bitrate: ${song_obj['bitrate (kbps)']} kbps</span>
+      <span>Genre: ${song_obj.genre}</span>
+      <span>Year: ${song_obj['release year']}</span>
+    </div>
+    <div class="song-user" onclick="userSearch('${song_obj.sc_user}')">User: ${song_obj.sc_user}</div>
+  `;
+}
 
 function clearPlaylist(){
     playlist = [];
