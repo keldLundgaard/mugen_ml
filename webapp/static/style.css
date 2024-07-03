@@ -19,6 +19,19 @@ body {
     box-sizing: border-box;
 }
 
+h4.fansAlsoLike {
+    height: 20px;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 0px;
+}
+
+span.fansAlsoLike {
+    margin-right: 5px;
+    font-family: 'Roboto', Arial, sans-serif;
+    color: #333;
+}
+
 .playlist-container {
     margin-bottom: 10px;
 }
@@ -26,7 +39,6 @@ body {
 /* Layout Styles */
 .left-side,
 .right-side {
-    overflow-y: auto;
     border-radius: 10px;
 }
 
@@ -35,6 +47,8 @@ body {
     padding: 20px;
     background-color: #ffffff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
 }
 
 .right-side {
@@ -90,11 +104,14 @@ h1 {
 }
 
 .search-results {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 #searchResults {
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
+    /* max-height: calc(100vh - 200px); */
 }
 
 /* Music Player Styles */
@@ -127,7 +144,8 @@ audio {
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    max-height: 35vh;    
+    overflow-y: auto;
     /* Add this to prevent content from overflowing */
 }
 
@@ -174,8 +192,22 @@ audio {
 /* Table Styles */
 .song-table {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.results_table_body {
+    max-height: calc(100vh - 420px);
+    overflow-y: auto;
+    display: block;
+}
+
+tbody {
+    display: block;
+    width: 100%;
 }
 
 .song-table th,
@@ -186,6 +218,12 @@ audio {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.song-table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
 }
 
 .song-table th {
@@ -356,3 +394,52 @@ input:checked+.slider:before {
     white-space: nowrap;
 }
 
+/* Show song details of song that is playing */
+
+.song-details {
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.song-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1db954;
+    margin-bottom: 10px;
+}
+
+.song-artist,
+.song-album,
+.song-user {
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.song-artist:hover,
+.song-album:hover,
+.song-user:hover {
+    color: #1db954;
+    text-decoration: underline;
+}
+
+.song-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.song-info span {
+    background-color: #e8e8e8;
+    padding: 3px 8px;
+    border-radius: 4px;
+}

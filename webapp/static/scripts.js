@@ -66,19 +66,20 @@ function SearchFansAlsoLike(sc_user){
 } 
 
 function displayFansAlsoLike(user_list){
-  console.log(user_list)
   const fansAlsoLikeDiv = document.getElementById('fansAlsoLike');
-  fansAlsoLikeDiv.innerHTML = '<h4>Fans also like <span onclick="removeFansAlsoLike()">❌</span></h4><ul>';
+  fansAlsoLikeDiv.innerHTML = '<h4 class="fansAlsoLike">Fans also like</h4>';
   user_list.forEach(sc_user => {
         fansAlsoLikeDiv.innerHTML += `
-        <li onclick="userSearch('${sc_user}')">${sc_user}</li>`;
+        <span class="fansAlsoLike" onclick="userSearch('${sc_user}'); removeFansAlsoLike()">${sc_user}</span>`;
     });
-  fansAlsoLikeDiv.innerHTML += '</ul>';
+  document.querySelector('.search_results').style.cssText = 'margin-top: -20px;';
+  // fansAlsoLikeDiv.innerHTML += '<span class="fansAlsoLike" onclick="removeFansAlsoLike()">❌</span>';
 }
 
 function removeFansAlsoLike() {
   const fansAlsoLikeDiv = document.getElementById('fansAlsoLike');
   fansAlsoLikeDiv.innerHTML =''
+  document.querySelector('.search_results').style.cssText = 'margin-top: 0px;';
 }
 
 
@@ -148,6 +149,7 @@ async function displaySearchResults(song_ids) {
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
+      tbody.className = "results_table_body"
 
       songs.forEach(song => {
         const row = document.createElement('tr');
